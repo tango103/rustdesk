@@ -163,11 +163,18 @@ void showServerSettingsWithValue(
     ServerConfig serverConfig,
     OverlayDialogManager dialogManager,
     void Function(VoidCallback)? upSetState) async {
+  const defaultHost = 'rustdesk3037.duckdns.org';
+  const defaultKey = 'ILCW1ea5QWoSxa4eN1ovCqFCs8IxSMgf7PCYWHNX0jQ=';
   var isInProgress = false;
-  final idCtrl = TextEditingController(text: serverConfig.idServer);
-  final relayCtrl = TextEditingController(text: serverConfig.relayServer);
+  final idCtrl = TextEditingController(
+      text: serverConfig.idServer.isEmpty ? defaultHost : serverConfig.idServer);
+  final relayCtrl = TextEditingController(
+      text: serverConfig.relayServer.isEmpty
+          ? defaultHost
+          : serverConfig.relayServer);
   final apiCtrl = TextEditingController(text: serverConfig.apiServer);
-  final keyCtrl = TextEditingController(text: serverConfig.key);
+  final keyCtrl = TextEditingController(
+      text: serverConfig.key.isEmpty ? defaultKey : serverConfig.key);
 
   RxString idServerMsg = ''.obs;
   RxString relayServerMsg = ''.obs;

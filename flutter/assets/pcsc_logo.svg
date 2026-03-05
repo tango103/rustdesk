@@ -1,0 +1,8 @@
+<svg width="284" height="157" viewBox="0 0 284 157" xmlns="http://www.w3.org/2000/svg">
+  <rect x="3" y="3" width="278" height="151" rx="22" fill="#FFFFFF" stroke="#1F1F1F" stroke-width="5"/>
+  <text x="34" y="84" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="700" fill="#C30E06">PC</text>
+  <text x="150" y="84" font-family="Arial, Helvetica, sans-serif" font-size="74" fill="#232A96">SC</text>
+  <line x1="36" y1="98" x2="248" y2="98" stroke="#1F1F1F" stroke-width="6"/>
+  <text x="38" y="142" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="700" fill="#C30E06">PC</text>
+  <text x="97" y="142" font-family="Arial, Helvetica, sans-serif" font-size="48" fill="#232A96">SolutionCenter</text>
+</svg>
