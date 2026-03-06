@@ -54,6 +54,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
 
   final RxBool _editHover = false.obs;
   final RxBool _block = false.obs;
+  final RxBool _showOneTimePassword = false.obs;
 
   final GlobalKey _childKey = GlobalKey();
 
@@ -345,18 +346,39 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                               showToast(translate("Copied"));
                             }
                           },
-                          child: TextFormField(
-                            controller: model.serverPasswd,
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding:
-                                  EdgeInsets.only(top: 14, bottom: 10),
-                            ),
-                            style: TextStyle(fontSize: 15),
-                          ).workaroundFreezeLinuxMint(),
+                          child: Obx(() => TextFormField(
+                                controller: model.serverPasswd,
+                                readOnly: true,
+                                obscureText: showOneTime &&
+                                    !_showOneTimePassword.value,
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding:
+                                      EdgeInsets.only(top: 14, bottom: 10),
+                                ),
+                                style: TextStyle(fontSize: 15),
+                              ).workaroundFreezeLinuxMint()),
                         ),
                       ),
+                      if (showOneTime)
+                        Obx(
+                          () => InkWell(
+                            child: Tooltip(
+                              message: translate(_showOneTimePassword.value
+                                  ? 'Hide'
+                                  : 'Show'),
+                              child: Icon(
+                                _showOneTimePassword.value
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: textColor?.withOpacity(0.7),
+                                size: 20,
+                              ).marginOnly(right: 8, top: 4),
+                            ),
+                            onTap: () => _showOneTimePassword.value =
+                                !_showOneTimePassword.value,
+                          ),
+                        ),
                       if (showOneTime)
                         AnimatedRotationWidget(
                           onPressed: () => bind.mainUpdateTemporaryPassword(),
