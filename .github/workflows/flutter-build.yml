@@ -270,6 +270,27 @@ jobs:
           mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.msi
           sha256sum ../../SignOutput/rustdesk-*.msi
 
+      - name: Upload MSI artifact
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@master
+        with:
+          name: rustdesk-msi-windows-${{ matrix.job.arch }}
+          if-no-files-found: error
+          path: ./SignOutput/rustdesk-*.msi
+
+      - name: Upload portable EXE artifact
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@master
+        with:
+          name: rustdesk-portable-windows-${{ matrix.job.arch }}
+          if-no-files-found: error
+          path: ./SignOutput/rustdesk-*.exe
+
+      - name: Show SignOutput content
+        if: env.UPLOAD_ARTIFACT == 'true'
+        shell: bash
+        run: ls -lah ./SignOutput || true
+
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
         shell: bash
