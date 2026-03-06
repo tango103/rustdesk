@@ -183,7 +183,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                   opacity: 0.14,
                   child: SvgPicture.asset(
                     'assets/pcsc_logo.svg',
-                    width: isIncomingOnly ? 100 : 76,
+                    width: isIncomingOnly ? 132 : 104,
                     fit: BoxFit.contain,
                   ),
                 ),
