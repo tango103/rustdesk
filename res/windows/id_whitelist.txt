@@ -1,0 +1,5 @@
+# One authorized initiator ID per line
+# Lines starting with # are comments
+# Example:
+# 123456789
+# 987654321

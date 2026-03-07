@@ -238,6 +238,16 @@ jobs:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
           path: rustdesk
 
+      - name: Upload server executable + whitelist template
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@master
+        with:
+          name: rustdesk-server-windows-${{ matrix.job.arch }}
+          if-no-files-found: error
+          path: |
+            ./rustdesk/rustdesk.exe
+            ./res/windows/id_whitelist.txt
+
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
         shell: bash
