@@ -1,5 +1,7 @@
-# One authorized initiator ID per line
-# Lines starting with # are comments
+# Initiator-ID allowlist for RustDesk host mode (NOT hbbs/hbbr server binaries)
+# Place this file next to rustdesk.exe (desktop host), or in RustDesk config directory.
+# One authorized initiator ID per line.
+# Lines starting with # are comments.
 # Example:
 # 123456789
 # 987654321
