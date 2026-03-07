@@ -1254,7 +1254,7 @@ impl Connection {
         }
         self.send_login_error("Your ID is blocked by the peer").await;
         Self::post_alarm_audit(
-            AlarmAuditType::Peer,
+            AlarmAuditType::InitiatorIdWhitelist,
             json!({"peer_id": normalized_id, "type": "initiator_id_whitelist"}),
         );
         false
@@ -4989,6 +4989,7 @@ pub enum AlarmAuditType {
     // MultipleLoginsAttemptsWithinOneMinute = 4,
     // MultipleLoginsAttemptsWithinOneHour = 5,
     ExceedIPv6PrefixAttempts = 6,
+    InitiatorIdWhitelist = 7,
 }
 
 pub enum FileAuditType {
