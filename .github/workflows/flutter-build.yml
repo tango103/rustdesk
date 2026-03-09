@@ -248,6 +248,17 @@ jobs:
             ./res/windows/id_whitelist.txt
             ./res/windows/id_whitelist.README.txt
 
+      - name: Clarify artifact scope in workflow summary
+        if: env.UPLOAD_ARTIFACT == 'true'
+        shell: bash
+        run: |
+          {
+            echo "### Windows artifact scope";
+            echo "- This workflow builds RustDesk client/host artifacts (rustdesk.exe).";
+            echo "- It does not build standalone RustDesk Server binaries (hbbs/hbbr from rustdesk-server).";
+            echo "- The initiator-ID whitelist template artifact is host-mode guidance only.";
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
         shell: bash
