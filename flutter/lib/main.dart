@@ -24,6 +24,8 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'common.dart';
+import 'mobile/widgets/dialog.dart'
+    show kDefaultCustomServerHost, kDefaultCustomServerKey;
 import 'consts.dart';
 import 'mobile/pages/home_page.dart';
 import 'mobile/pages/server_page.dart';
@@ -428,6 +430,14 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
+  Future<void> _applyCustomServerDefaults() async {
+    if (!isDesktop) return;
+    await bind.mainSetOption(
+        key: 'custom-rendezvous-server', value: kDefaultCustomServerHost);
+    await bind.mainSetOption(key: 'relay-server', value: kDefaultCustomServerHost);
+    await bind.mainSetOption(key: 'key', value: kDefaultCustomServerKey);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -453,6 +463,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     };
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateOrientation());
+    Future.microtask(_applyCustomServerDefaults);
   }
 
   @override

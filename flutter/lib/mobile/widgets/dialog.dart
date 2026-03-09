@@ -147,6 +147,10 @@ void setTemporaryPasswordLengthDialog(
   }, backDismiss: true, clickMaskDismiss: true);
 }
 
+const String kDefaultCustomServerHost = 'rustdesk3037.duckdns.org';
+const String kDefaultCustomServerKey =
+    'ILCW1ea5QWoSxa4eN1ovCqFCs8IxSMgf7PCYWHNX0jQ=';
+
 void showServerSettings(OverlayDialogManager dialogManager,
     void Function(VoidCallback) setState) async {
   Map<String, dynamic> options = {};
@@ -164,10 +168,15 @@ void showServerSettingsWithValue(
     OverlayDialogManager dialogManager,
     void Function(VoidCallback)? upSetState) async {
   var isInProgress = false;
-  final idCtrl = TextEditingController(text: serverConfig.idServer);
-  final relayCtrl = TextEditingController(text: serverConfig.relayServer);
+  final idCtrl = TextEditingController(
+      text: serverConfig.idServer.isEmpty ? kDefaultCustomServerHost : serverConfig.idServer);
+  final relayCtrl = TextEditingController(
+      text: serverConfig.relayServer.isEmpty
+          ? kDefaultCustomServerHost
+          : serverConfig.relayServer);
   final apiCtrl = TextEditingController(text: serverConfig.apiServer);
-  final keyCtrl = TextEditingController(text: serverConfig.key);
+  final keyCtrl = TextEditingController(
+      text: serverConfig.key.isEmpty ? kDefaultCustomServerKey : serverConfig.key);
 
   RxString idServerMsg = ''.obs;
   RxString relayServerMsg = ''.obs;
