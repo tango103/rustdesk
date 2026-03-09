@@ -238,13 +238,15 @@ jobs:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
           path: rustdesk
 
-      - name: Upload initiator ID whitelist template
+      - name: Upload initiator ID whitelist template (host mode only)
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
           name: rustdesk-initiator-id-whitelist-template
           if-no-files-found: error
-          path: ./res/windows/id_whitelist.txt
+          path: |
+            ./res/windows/id_whitelist.txt
+            ./res/windows/id_whitelist.README.txt
 
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'

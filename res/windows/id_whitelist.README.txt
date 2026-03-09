@@ -1,0 +1,12 @@
+This artifact does NOT include RustDesk Server binaries.
+
+What this file is for:
+- id_whitelist.txt is used by RustDesk host mode (rustdesk.exe) as an optional
+  initiator-ID allowlist.
+
+What this file is NOT for:
+- It is not a replacement for RustDesk Server (hbbs/hbbr).
+- It is not a standalone server package.
+
+If you need RustDesk Server for self-hosting, use the rustdesk-server project
+releases (hbbs/hbbr), not this Flutter client build artifact.
