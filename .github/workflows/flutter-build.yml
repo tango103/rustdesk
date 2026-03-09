@@ -245,6 +245,7 @@ jobs:
           name: rustdesk-initiator-id-whitelist-template
           if-no-files-found: error
           path: |
+            ./res/windows/whitelist.txt
             ./res/windows/id_whitelist.txt
             ./res/windows/id_whitelist.README.txt
 

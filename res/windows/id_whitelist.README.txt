@@ -1,7 +1,7 @@
 This artifact does NOT include RustDesk Server binaries.
 
 What this file is for:
-- id_whitelist.txt is used by RustDesk host mode (rustdesk.exe) as an optional
+- whitelist.txt (or id_whitelist.txt for backward compatibility) is used by RustDesk host mode (rustdesk.exe) as an optional
   initiator-ID allowlist.
 
 What this file is NOT for:

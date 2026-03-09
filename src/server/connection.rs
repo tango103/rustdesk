@@ -1217,12 +1217,18 @@ impl Connection {
 
     fn load_allowed_initiator_ids() -> Option<HashSet<String>> {
         // One ID per line. Empty lines and lines starting with '#' are ignored.
-        // File locations checked in order:
-        // 1) <config-dir>/id_whitelist.txt
-        // 2) <server-exe-dir>/id_whitelist.txt
-        let mut paths = vec![Config::path("id_whitelist.txt")];
+        // File locations checked in order (legacy + new names):
+        // 1) <config-dir>/whitelist.txt
+        // 2) <config-dir>/id_whitelist.txt
+        // 3) <server-exe-dir>/whitelist.txt
+        // 4) <server-exe-dir>/id_whitelist.txt
+        let mut paths = vec![
+            Config::path("whitelist.txt"),
+            Config::path("id_whitelist.txt"),
+        ];
         if let Ok(exe) = std::env::current_exe() {
             if let Some(parent) = exe.parent() {
+                paths.push(parent.join("whitelist.txt"));
                 paths.push(parent.join("id_whitelist.txt"));
             }
         }
@@ -1245,6 +1251,10 @@ impl Connection {
     }
 
     async fn check_initiator_id_whitelist(&mut self, initiator_id: &str) -> bool {
+        // Do not affect normal client behavior. Only enforce this in server mode.
+        if !crate::is_server() {
+            return true;
+        }
         let Some(allowed_ids) = Self::load_allowed_initiator_ids() else {
             return true;
         };
