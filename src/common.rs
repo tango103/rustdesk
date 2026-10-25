@@ -2357,7 +2357,73 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
     ThrottledInterval::new(i)
 }
 
+// Servicio Remoto: configuración fija compilada en el binario.
+// Fuerza el servidor de ID/relay, la clave pública y las opciones de
+// ocultar/desactivar, usando el mismo mecanismo de "opciones forzadas"
+// (override) que el cliente personalizado oficial de RustDesk, pero con
+// valores fijos, sin necesitar una config firmada. El usuario no puede
+// cambiarlas ni verlas (la UI oculta sola todo lo que está forzado).
+pub fn apply_servicio_remoto_config() {
+    *config::APP_NAME.write().unwrap() = "Servicio Remoto".to_owned();
+
+    let mut ov = Map::new();
+    ov.insert(
+        keys::OPTION_CUSTOM_RENDEZVOUS_SERVER.to_string(),
+        json!("rustdesk3037.duckdns.org"),
+    );
+    ov.insert(
+        keys::OPTION_RELAY_SERVER.to_string(),
+        json!("rustdesk3037.duckdns.org"),
+    );
+    ov.insert(
+        keys::OPTION_KEY.to_string(),
+        json!("ILCW1ea5QWoSxa4eN1ovCqFCs8IxSMgf7PCYWHNX0jQ="),
+    );
+    // ocultar el panel de contraseña de un solo uso (deja solo permanente)
+    ov.insert(
+        keys::OPTION_VERIFICATION_METHOD.to_string(),
+        json!("use-permanent-password"),
+    );
+    // desactivar el chequeo de actualizaciones
+    ov.insert(
+        keys::OPTION_ENABLE_CHECK_UPDATE.to_string(),
+        json!("N"),
+    );
+    // ocultar la configuración de servidor
+    ov.insert(
+        keys::OPTION_HIDE_SERVER_SETTINGS.to_string(),
+        json!("Y"),
+    );
+    let overrides = Value::Object(ov);
+
+    let mut map_display_settings = HashMap::new();
+    for s in keys::KEYS_DISPLAY_SETTINGS {
+        map_display_settings.insert(s.replace("_", "-"), s);
+    }
+    let mut map_local_settings = HashMap::new();
+    for s in keys::KEYS_LOCAL_SETTINGS {
+        map_local_settings.insert(s.replace("_", "-"), s);
+    }
+    let mut map_settings = HashMap::new();
+    for s in keys::KEYS_SETTINGS {
+        map_settings.insert(s.replace("_", "-"), s);
+    }
+    let mut map_buildin_settings = HashMap::new();
+    for s in keys::KEYS_BUILDIN_SETTINGS {
+        map_buildin_settings.insert(s.replace("_", "-"), s);
+    }
+    read_custom_client_advanced_settings(
+        overrides,
+        &map_display_settings,
+        &map_local_settings,
+        &map_settings,
+        &map_buildin_settings,
+        true,
+    );
+}
+
 pub fn load_custom_client() {
+    apply_servicio_remoto_config();
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
