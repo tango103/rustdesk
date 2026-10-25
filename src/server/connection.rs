@@ -1215,6 +1215,61 @@ impl Connection {
         true
     }
 
+    fn load_allowed_initiator_ids() -> Option<HashSet<String>> {
+        // One ID per line. Empty lines and lines starting with '#' are ignored.
+        // File locations checked in order (legacy + new names):
+        // 1) <config-dir>/whitelist.txt
+        // 2) <config-dir>/id_whitelist.txt
+        // 3) <server-exe-dir>/whitelist.txt
+        // 4) <server-exe-dir>/id_whitelist.txt
+        let mut paths = vec![
+            Config::path("whitelist.txt"),
+            Config::path("id_whitelist.txt"),
+        ];
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(parent) = exe.parent() {
+                paths.push(parent.join("whitelist.txt"));
+                paths.push(parent.join("id_whitelist.txt"));
+            }
+        }
+        let content = paths
+            .into_iter()
+            .find_map(|path| std::fs::read_to_string(path).ok())?;
+        let ids: HashSet<String> = content
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .map(|line| line.split_whitespace().next().unwrap_or("").trim())
+            .filter(|line| !line.is_empty())
+            .map(ToOwned::to_owned)
+            .collect();
+        if ids.is_empty() {
+            None
+        } else {
+            Some(ids)
+        }
+    }
+
+    async fn check_initiator_id_whitelist(&mut self, initiator_id: &str) -> bool {
+        // Do not affect normal client behavior. Only enforce this in server mode.
+        if !crate::is_server() {
+            return true;
+        }
+        let Some(allowed_ids) = Self::load_allowed_initiator_ids() else {
+            return true;
+        };
+        let normalized_id = initiator_id.split('@').next().unwrap_or(initiator_id);
+        if allowed_ids.contains(normalized_id) {
+            return true;
+        }
+        self.send_login_error("Your ID is blocked by the peer").await;
+        Self::post_alarm_audit(
+            AlarmAuditType::InitiatorIdWhitelist,
+            json!({"peer_id": normalized_id, "type": "initiator_id_whitelist"}),
+        );
+        false
+    }
+
     async fn on_open(&mut self, addr: SocketAddr) -> bool {
         log::debug!("#{} Connection opened from {}.", self.inner.id, addr);
         if !self.check_whitelist(&addr).await {
@@ -2166,6 +2221,10 @@ impl Connection {
             self.handle_login_request_without_validation(&lr).await;
             if self.authorized {
                 return true;
+            }
+            if !self.check_initiator_id_whitelist(&lr.my_id).await {
+                sleep(1.).await;
+                return false;
             }
             match lr.union {
                 Some(login_request::Union::FileTransfer(ft)) => {
@@ -4940,6 +4999,7 @@ pub enum AlarmAuditType {
     // MultipleLoginsAttemptsWithinOneMinute = 4,
     // MultipleLoginsAttemptsWithinOneHour = 5,
     ExceedIPv6PrefixAttempts = 6,
+    InitiatorIdWhitelist = 7,
 }
 
 pub enum FileAuditType {
