@@ -16,6 +16,9 @@ jobs:
     steps:
       - name: Descargar el codigo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # Siempre compila el codigo de esta rama, aunque se ejecute desde master.
+          ref: tech-auth-1.5.0
 
       - name: Instalar Rust
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
