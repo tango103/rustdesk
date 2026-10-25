@@ -1,0 +1,33 @@
+name: tech-keygen (Windows .exe)
+
+# Compila la herramienta del tecnico (genera/prueba la llave) como .exe de Windows.
+# No necesita vcpkg ni submodulos: tools/tech-keygen es un proyecto Rust independiente.
+# Se corre a mano desde la pestaña Actions (Run workflow).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+
+      - name: Compilar tech-keygen
+        run: cargo build --release --manifest-path tools/tech-keygen/Cargo.toml
+
+      - name: Subir tech-keygen.exe
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tech-keygen
+          path: tools/tech-keygen/target/release/tech-keygen.exe
+          if-no-files-found: error

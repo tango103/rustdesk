@@ -1,0 +1,84 @@
+name: Servicio Remoto - 32 bits (Sciter)
+
+# Compila la version de 32 bits (UI Sciter) para Windows.
+# La clave PUBLICA del tecnico se lee de la variable de repositorio TECH_PUBKEY
+# (Settings -> Secrets and variables -> Actions -> Variables -> New repository variable).
+# Si TECH_PUBKEY esta vacia, tech_auth queda desactivado (se comporta como el original).
+# El servidor y la clave del servidor ya estan fijos en el codigo (no hace falta variable).
+# Se corre a mano desde la pestaña Actions (Run workflow).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  LLVM_VERSION: "15.0.6"
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Exportar variables de cache de Actions
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Descargar el codigo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - name: Instalar LLVM/Clang de 32 bits
+        uses: rustdesk-org/install-llvm-action-32bit@6aa7d9ad3df84dff01cd4596dd0fc880a7f47fce
+        with:
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Instalar Rust (nightly i686)
+        shell: bash
+        run: |
+          # Sciter necesita nightly (abi_thiscall) y un toolchain i686.
+          rustup toolchain install nightly-2023-10-13-i686-pc-windows-msvc \
+            --target i686-pc-windows-msvc --component rustfmt \
+            --profile minimal --no-self-update --force-non-host
+          rustup default nightly-2023-10-13-i686-pc-windows-msvc --force-non-host
+
+      - name: Configurar vcpkg
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Instalar dependencias vcpkg (x86-windows-static)
+        shell: bash
+        env:
+          VCPKG_DEFAULT_HOST_TRIPLET: x86-windows-static
+        run: |
+          $VCPKG_ROOT/vcpkg install --triplet x86-windows-static --x-install-root="$VCPKG_ROOT/installed"
+
+      - name: Compilar (Sciter 32 bits)
+        shell: bash
+        env:
+          TECH_PUBKEY: ${{ vars.TECH_PUBKEY }}
+        run: |
+          python3 res/inline-sciter.py
+          # parche sciter para x86
+          sed -i 's/branch = "dyn"/branch = "dyn_x86"/g' ./Cargo.toml
+          cargo update -p sciter-rs --precise 674e07d3066ca9a92ced3816203ab6b652629d1e
+          cargo build --locked --features inline,vram,hwcodec --release --bins
+          mkdir -p ./Release
+          mv ./target/release/rustdesk.exe ./Release/rustdesk.exe
+          curl -LJ -o ./Release/sciter.dll https://github.com/c-smile/sciter-sdk/raw/master/bin.win/x32/sciter.dll
+
+      - name: Subir artefacto (carpeta Release)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: servicio-remoto-32bit-sciter
+          path: ./Release
+          if-no-files-found: error
