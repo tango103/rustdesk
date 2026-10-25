@@ -7170,6 +7170,7 @@ dependencies = [
  "sha2",
  "shared_memory",
  "shutdown_hooks",
+ "sodiumoxide",
  "softbuffer",
  "stunclient",
  "sys-locale",
