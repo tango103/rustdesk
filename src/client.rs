@@ -3854,11 +3854,26 @@ impl LoginConfigHandler {
         let my_platform = hbb_common::whoami::platform().to_string();
         #[cfg(target_os = "android")]
         let my_platform = "Android".into();
-        let hwid = if self.get_option("trust-this-device") == "Y" {
+        #[allow(unused_mut)]
+        let mut hwid = if self.get_option("trust-this-device") == "Y" {
             crate::get_hwid()
         } else {
             Bytes::new()
         };
+        // tech_auth: si este equipo tiene la llave del técnico, firma el desafío
+        // del equipo remoto y manda la firma en `hwid` (los clientes sin tech_auth
+        // ignoran ese campo, así sigue funcionando con equipos viejos).
+        if crate::tech_auth::enabled() {
+            let sig = crate::tech_auth::sign_for_login(
+                &self.hash.challenge,
+                &self.hash.salt,
+                &pure_id,
+                &my_id,
+            );
+            if !sig.is_empty() {
+                hwid = sig.into();
+            }
+        }
         let os_login: MessageField<OSLogin> = if self.conn_type == ConnType::TERMINAL {
             Some(OSLogin {
                 username: os_username,

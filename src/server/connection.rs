@@ -370,6 +370,8 @@ pub struct Connection {
     port_forward_address: String,
     tx_to_cm: mpsc::UnboundedSender<ipc::Data>,
     authorized: bool,
+    /// true cuando el técnico presentó una firma válida (ver tech_auth.rs)
+    tech_ok: bool,
     // The place among the unauthorized connections; given back at authorization.
     unauthorized_id: Option<UnauthorizedID>,
     require_2fa: Option<totp_rs::TOTP>,
@@ -542,7 +544,11 @@ impl Connection {
         let salt = Config::get_effective_permanent_password_salt();
         let hash = Hash {
             salt,
-            challenge: Config::get_auto_password(6),
+            challenge: Config::get_auto_password(if crate::tech_auth::enabled() {
+                32
+            } else {
+                6
+            }),
             ..Default::default()
         };
         let (tx_from_cm_holder, mut rx_from_cm) = mpsc::unbounded_channel::<ipc::Data>();
@@ -586,6 +592,7 @@ impl Connection {
             port_forward_address: "".to_owned(),
             tx_to_cm,
             authorized: false,
+            tech_ok: false,
             unauthorized_id: Some(unauthorized),
             keyboard: Self::permission(keys::OPTION_ENABLE_KEYBOARD, &control_permissions),
             clipboard: Self::permission(keys::OPTION_ENABLE_CLIPBOARD, &control_permissions),
@@ -1844,6 +1851,12 @@ impl Connection {
         if self.authorized {
             return true;
         }
+        // Candado final: con tech_auth activo, ninguna ruta (contraseña, 2FA,
+        // aprobación por clic) puede autorizar sin firma válida del técnico.
+        if crate::tech_auth::enabled() && !self.tech_ok {
+            log::warn!("tech_auth: se intentó autorizar una sesión sin firma válida");
+            return false;
+        }
         if self.require_2fa.is_some() && !self.is_recent_session(true) && !self.from_switch {
             self.require_2fa.as_ref().map(|totp| {
                 let bot = crate::auth_2fa::TelegramBot::get();
@@ -2552,6 +2565,10 @@ impl Connection {
     }
 
     fn validate_password(&mut self, allow_permanent_password: bool) -> bool {
+        // Con tech_auth activo la firma del técnico reemplaza a la contraseña.
+        if crate::tech_auth::enabled() {
+            return self.tech_ok;
+        }
         if password::temporary_enabled() {
             let password = password::temporary_password();
             if self.validate_password_plain(&password) {
@@ -2868,6 +2885,25 @@ impl Connection {
             if self.authorized {
                 return true;
             }
+            // --- tech_auth: verificar firma del técnico (viene en lr.hwid) ---
+            if crate::tech_auth::enabled() && !self.tech_ok {
+                let target_id = Config::get_id();
+                if crate::tech_auth::verify_with_embedded_key(
+                    &self.hash.challenge,
+                    &self.hash.salt,
+                    &target_id,
+                    &lr.my_id,
+                    &lr.hwid,
+                ) {
+                    self.tech_ok = true;
+                } else {
+                    log::warn!("tech_auth: firma inválida o ausente de {}", lr.my_id);
+                    self.send_login_error(crate::client::LOGIN_MSG_PASSWORD_WRONG)
+                        .await;
+                    sleep(1.).await;
+                    return false;
+                }
+            }
             self.reset_session_scope_for_login();
             if !self.check_id_whitelist().await {
                 return false;
@@ -2991,8 +3027,10 @@ impl Connection {
                 crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
                     && is_logon();
 
-            if (password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
-                || password::approve_mode() == ApproveMode::Both && !password::has_valid_password()
+            if !crate::tech_auth::enabled()
+                && ((password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
+                    || password::approve_mode() == ApproveMode::Both
+                        && !password::has_valid_password())
             {
                 #[cfg(not(any(target_os = "android", target_os = "ios")))]
                 if should_use_terminal_os_login_scope(self.terminal, &lr.os_login.username) {

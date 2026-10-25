@@ -61,6 +61,9 @@ serde_repr = "0.1"
 cfg-if = "1.0"
 lazy_static = "1.4"
 sha2 = "0.10"
+# tech_auth: firma/verificación Ed25519 del técnico (ver src/tech_auth.rs).
+# Ya estaba en Cargo.lock como dependencia indirecta; aquí se vuelve directa.
+sodiumoxide = "0.2.7"
 repng = "0.2"
 zstd = "0.13"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }

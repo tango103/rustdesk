@@ -1,0 +1,11 @@
+[package]
+name = "tech-keygen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sodiumoxide = "0.2"
+rpassword = "=7.2.0"
+
+# proyecto independiente: no forma parte del workspace de RustDesk
+[workspace]
